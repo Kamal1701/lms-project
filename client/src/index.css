@@ -5,3 +5,22 @@
 * {
   font-family: Outfit;
 }
+
+@theme {
+  --grid-cols-auto: repeat(auto-fit, minmax(200px, 1fr));
+
+  --font-size-course-details-heading-small: 26px;
+  --line-height-course-details-heading-small: 36px;
+
+  --font-size-course-details-heading-large: 36px;
+  --line-height-course-details-heading-large: 44px;
+
+  --font-size-home-heading-small: 28px;
+  --line-height-home-heading-small: 34px;
+
+  --font-size-home-heading-large: 48px;
+  --line-height-home-heading-large: 56px;
+
+  --font-size-default: 15px;
+  --line-height-default: 21px;
+}
