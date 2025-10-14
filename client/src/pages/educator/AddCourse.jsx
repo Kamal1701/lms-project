@@ -50,6 +50,52 @@ const AddCourse = () => {
     }
   };
 
+  const handleLecture = (action, chapterId, lectureIndex) => {
+    if (action === "add") {
+      setCurrentChapterId(chapterId);
+      setShowPopup(true);
+    } else if (action === "remove") {
+      setChapters(
+        chapters.map((chapter) => {
+          if (chapter.chapterId === chapterId) {
+            chapter.chapterContent.splice(lectureIndex, 1);
+          }
+          return chapter;
+        })
+      );
+    }
+  };
+
+  const addLecture = () => {
+    setChapters(
+      chapters.map((chapter) => {
+        if (chapter.chapterId === currentChapterId) {
+          const newLecture = {
+            ...lectureDetails,
+            lectureOrder:
+              chapter.chapterContent.length > 0
+                ? chapter.chapterContent.slice(-1)[0].lectureOrder + 1
+                : 1,
+            lectureId: uniqid(),
+          };
+          chapter.chapterContent.push(newLecture);
+        }
+        return chapter;
+      })
+    );
+    setShowPopup(false);
+    setLectureDetails({
+      lectureTitle: "",
+      lectureDuration: "",
+      lectureUrl: "",
+      isPreviewFree: false,
+    });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+  };
+
   useEffect(() => {
     // initiate quill only once
     if (!quillRef.current && editorRef.current) {
@@ -61,7 +107,10 @@ const AddCourse = () => {
 
   return (
     <div className="h-screen overflow-scroll flex flex-col items-start justify-between md:p-8 md:pb-0 p-4 pt-8 pb-0">
-      <form>
+      <form
+        onSubmit={handleSubmit}
+        className="flex flex-col gap-4 max-w-md w-full text-gray-500"
+      >
         <div className="flex flex-col gap-1">
           <p>Course Title</p>
           <input
@@ -131,6 +180,7 @@ const AddCourse = () => {
               <div className="flex justify-between items-center p-4 border-b">
                 <div className="flex items-center">
                   <img
+                    onClick={() => handleChapter("toggle", chapter.chapterId)}
                     src={assets.dropdown_icon}
                     width={14}
                     alt=""
@@ -139,7 +189,7 @@ const AddCourse = () => {
                     }`}
                   />
                   <span className="font-semibold">
-                    {chapterIndex + 1} {chapter.chterTitle}
+                    {chapterIndex + 1} {chapter.chapterTitle}
                   </span>
                 </div>
                 \
@@ -150,6 +200,7 @@ const AddCourse = () => {
                   src={assets.cross_icon}
                   alt=""
                   className="cursor-pointer"
+                  onClick={() => handleChapter("remove", chapter.chapterId)}
                 />
               </div>
               {!chapter.collapsed && (
@@ -175,10 +226,20 @@ const AddCourse = () => {
                         src={assets.cross_icon}
                         alt=""
                         className="cursor-pointer"
+                        onClick={() =>
+                          handleLecture(
+                            "remove",
+                            chapter.chapterId,
+                            lectureIndex
+                          )
+                        }
                       />
                     </div>
                   ))}
-                  <div className="inline-flex bg-gray-100 p-2 rounded cursor-pointer mt-2">
+                  <div
+                    className="inline-flex bg-gray-100 p-2 rounded cursor-pointer mt-2"
+                    onClick={() => handleLecture("add", chapter.chapterId)}
+                  >
                     + Add Lecture
                   </div>
                 </div>
@@ -228,7 +289,7 @@ const AddCourse = () => {
                 <div className="mb-2">
                   <p>Lecture URL</p>
                   <input
-                    type="number"
+                    type="text"
                     className="mt-1 block w-full border rounded py-1 px-2"
                     value={lectureDetails.lectureUrl}
                     onChange={(e) =>
@@ -256,7 +317,8 @@ const AddCourse = () => {
                 </div>
                 <button
                   type="button"
-                  className="w-full bgblu400 text-white px-4 py-2 rounded"
+                  className="w-full bg-blue-500 text-white px-4 py-2 rounded"
+                  onClick={addLecture}
                 >
                   Add
                 </button>
