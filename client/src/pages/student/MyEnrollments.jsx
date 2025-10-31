@@ -1,49 +1,96 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { AppContext } from "../../context/AppContext";
 import { Line } from "rc-progress";
 import Footer from "../../components/student/Footer";
+import axios from "axios";
+import { toast } from "react-toastify";
 
 const Myenrollments = () => {
-  const { enrolledCourses, calculateCourseDuration, navigate } =
-    useContext(AppContext);
-  const [progressArray, setProgressArray] = useState([
-    {
-      lectureCompleted: 4,
-      totalLecture: 4,
-    },
-    {
-      lectureCompleted: 1,
-      totalLecture: 5,
-    },
-    {
-      lectureCompleted: 2,
-      totalLecture: 3,
-    },
-    {
-      lectureCompleted: 5,
-      totalLecture: 8,
-    },
-    {
-      lectureCompleted: 6,
-      totalLecture: 6,
-    },
-    {
-      lectureCompleted: 5,
-      totalLecture: 6,
-    },
-    {
-      lectureCompleted: 4,
-      totalLecture: 7,
-    },
-    {
-      lectureCompleted: 3,
-      totalLecture: 10,
-    },
-    {
-      lectureCompleted: 2,
-      totalLecture: 9,
-    },
-  ]);
+  const {
+    enrolledCourses,
+    calculateCourseDuration,
+    navigate,
+    userData,
+    fetchUserEnrolledCourses,
+    backendUrl,
+    getToken,
+    calculateNoOfLectures,
+  } = useContext(AppContext);
+  // const [progressArray, setProgressArray] = useState([
+  //   {
+  //     lectureCompleted: 4,
+  //     totalLectures: 4,
+  //   },
+  //   {
+  //     lectureCompleted: 1,
+  //     totalLectures: 5,
+  //   },
+  //   {
+  //     lectureCompleted: 2,
+  //     totalLectures: 3,
+  //   },
+  //   {
+  //     lectureCompleted: 5,
+  //     totalLectures: 8,
+  //   },
+  //   {
+  //     lectureCompleted: 6,
+  //     totalLectures: 6,
+  //   },
+  //   {
+  //     lectureCompleted: 5,
+  //     totalLectures: 6,
+  //   },
+  //   {
+  //     lectureCompleted: 4,
+  //     totalLectures: 7,
+  //   },
+  //   {
+  //     lectureCompleted: 3,
+  //     totalLectures: 10,
+  //   },
+  //   {
+  //     lectureCompleted: 2,
+  //     totalLectures: 9,
+  //   },
+  // ]);
+
+  const [progressArray, setProgressArray] = useState([]);
+
+  const getCourseProgress = async () => {
+    try {
+      const token = await getToken();
+      const tempProgressArray = await Promise.all(
+        enrolledCourses.map(async (course) => {
+          const { data } = await axios.post(
+            `${backendUrl}/api/user/get-course-progress`,
+            { courseId: course._id },
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          let totalLectures = calculateNoOfLectures(course);
+          const lectureCompleted = data.progressData
+            ? data.progressData.lectureCompleted.length
+            : 0;
+          return { totalLectures, lectureCompleted };
+        })
+      );
+      setProgressArray(tempProgressArray);
+    } catch (error) {
+      toast.error(error.message);
+    }
+  };
+
+  useEffect(() => {
+    if (userData) {
+      fetchUserEnrolledCourses();
+    }
+  }, [userData]);
+
+  useEffect(() => {
+    if (enrolledCourses.length > 0) {
+      getCourseProgress();
+    }
+  }, [enrolledCourses]);
 
   return (
     <>
@@ -74,7 +121,7 @@ const Myenrollments = () => {
                       percent={
                         progressArray[index]
                           ? (progressArray[index].lectureCompleted * 100) /
-                            progressArray[index].totalLecture
+                            progressArray[index].totalLectures
                           : 0
                       }
                       className="bg-gray-300 rounded-full"
@@ -86,7 +133,7 @@ const Myenrollments = () => {
                 </td>
                 <td className="px-4 py-3 max-sm:hidden">
                   {progressArray[index] &&
-                    `${progressArray[index].lectureCompleted}/${progressArray[index].totalLecture}`}{" "}
+                    `${progressArray[index].lectureCompleted}/${progressArray[index].totalLectures}`}{" "}
                   <span>Lectures</span>
                 </td>
                 <td className="px-4 py-3 max-sm:text-right">
@@ -96,7 +143,7 @@ const Myenrollments = () => {
                   >
                     {progressArray[index] &&
                     progressArray[index].lectureCompleted /
-                      progressArray[index].totalLecture ===
+                      progressArray[index].totalLectures ===
                       1
                       ? "Completed"
                       : "On Going"}
